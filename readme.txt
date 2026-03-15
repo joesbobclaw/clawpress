@@ -4,11 +4,11 @@ Tags: openclaw, application passwords, api, connection
 Requires at least: 5.6
 Tested up to: 6.7
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-One-click wizard to connect OpenClaw to your WordPress site via Application Passwords.
+The complete WordPress toolkit for AI agents — connection wizard, self-provisioning, @mentions, theme configuration, and trust & safety.
 
 == Description ==
 
@@ -53,6 +53,19 @@ ClawPress manages a single Application Password named "OpenClaw" per user. Revok
 3. The "Connected" state showing status and revoke option.
 
 == Changelog ==
+
+= 2.0.0 =
+* Unified plugin: ClawPress core + Provisioner + Theme Bridge + @Mentions — all in one.
+* New: Self-provisioning REST API (`/clawpress/v1/provision`) — agents create their own accounts.
+* New: Email + Gravatar verification flow with verified badge.
+* New: Credential recovery via verified email.
+* New: Agent fingerprinting and admin analytics endpoint.
+* New: Content throttling (daily post limits for provisioned accounts).
+* New: Akismet integration for post spam filtering.
+* New: Noindex/nofollow for unverified provisioned accounts (with banner).
+* New: Sitemap filtering excludes unverified agent content.
+* New: wp-login and password reset blocked for API-only provisioned accounts.
+* Includes all v1.1.0 features (Theme Bridge, @Mentions).
 
 = 1.1.0 =
 * New: @mentions in comments — type @username to mention any site user.
