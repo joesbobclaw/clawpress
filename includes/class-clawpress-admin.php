@@ -45,8 +45,8 @@ class ClawPress_Admin {
 	 */
 	public function add_admin_menu() {
 		add_management_page(
-			__( 'ClawPress', 'clawpress' ),
-			__( 'ClawPress', 'clawpress' ),
+			__( 'ClawPress', 'agent-press' ),
+			__( 'ClawPress', 'agent-press' ),
 			'manage_options',
 			'clawpress',
 			array( $this, 'render_admin_page' )
@@ -77,11 +77,11 @@ class ClawPress_Admin {
 			'ajax_url'       => admin_url( 'admin-ajax.php' ),
 			'create_nonce'   => wp_create_nonce( 'clawpress_create' ),
 			'revoke_nonce'   => wp_create_nonce( 'clawpress_revoke' ),
-			'confirm_msg'    => __( 'Are you sure you want to revoke the OpenClaw connection? You will need to reconfigure OpenClaw with a new password.', 'clawpress' ),
-			'creating_text'  => __( 'Connecting…', 'clawpress' ),
-			'revoking_text'  => __( 'Revoking…', 'clawpress' ),
-			'copied_text'    => __( 'Copied!', 'clawpress' ),
-			'copy_text'      => __( 'Copy', 'clawpress' ),
+			'confirm_msg'    => __( 'Are you sure you want to revoke the OpenClaw connection? You will need to reconfigure OpenClaw with a new password.', 'agent-press' ),
+			'creating_text'  => __( 'Connecting…', 'agent-press' ),
+			'revoking_text'  => __( 'Revoking…', 'agent-press' ),
+			'copied_text'    => __( 'Copied!', 'agent-press' ),
+			'copy_text'      => __( 'Copy', 'agent-press' ),
 		) );
 	}
 
@@ -90,7 +90,7 @@ class ClawPress_Admin {
 	 */
 	public function handle_create_ajax() {
 		if ( ! current_user_can( 'exist' ) ) {
-			wp_send_json_error( __( 'You do not have permission to do this.', 'clawpress' ) );
+			wp_send_json_error( __( 'You do not have permission to do this.', 'agent-press' ) );
 		}
 
 		check_ajax_referer( 'clawpress_create', 'nonce' );
@@ -111,7 +111,7 @@ class ClawPress_Admin {
 	 */
 	public function handle_revoke_ajax() {
 		if ( ! current_user_can( 'exist' ) ) {
-			wp_send_json_error( __( 'You do not have permission to do this.', 'clawpress' ) );
+			wp_send_json_error( __( 'You do not have permission to do this.', 'agent-press' ) );
 		}
 
 		check_ajax_referer( 'clawpress_revoke', 'nonce' );
@@ -122,7 +122,7 @@ class ClawPress_Admin {
 			wp_send_json_error( $result->get_error_message() );
 		}
 
-		wp_send_json_success( __( 'OpenClaw connection revoked successfully.', 'clawpress' ) );
+		wp_send_json_success( __( 'OpenClaw connection revoked successfully.', 'agent-press' ) );
 	}
 
 	/**
@@ -153,11 +153,11 @@ class ClawPress_Admin {
 		<div id="clawpress" class="clawpress-profile-section">
 			<h2 class="clawpress-title">
 				<span class="clawpress-logo">&#129438;</span>
-				<?php esc_html_e( 'ClawPress by WordPress.com', 'clawpress' ); ?>
+				<?php esc_html_e( 'ClawPress by WordPress.com', 'agent-press' ); ?>
 				<span class="dashicons dashicons-wordpress" style="font-size:1.2em;vertical-align:middle;opacity:0.7;"></span>
 			</h2>
 			<p class="description">
-				<?php esc_html_e( 'Connect OpenClaw to your WordPress site in one click.', 'clawpress' ); ?>
+				<?php esc_html_e( 'Connect OpenClaw to your WordPress site in one click.', 'agent-press' ); ?>
 			</p>
 
 			<?php if ( $error_message ) : ?>
@@ -185,22 +185,22 @@ class ClawPress_Admin {
 	private function render_created_state( $info ) {
 		$json = wp_json_encode( $info, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 		?>
-		<p><span class="clawpress-success-icon">&#10003;</span> <strong><?php esc_html_e( 'Connection Created!', 'clawpress' ); ?></strong></p>
+		<p><span class="clawpress-success-icon">&#10003;</span> <strong><?php esc_html_e( 'Connection Created!', 'agent-press' ); ?></strong></p>
 
 		<div class="clawpress-warning-box">
-			<strong><?php esc_html_e( 'Important:', 'clawpress' ); ?></strong>
-			<?php esc_html_e( 'This password will only be shown once. Copy the message below and send it to OpenClaw.', 'clawpress' ); ?>
+			<strong><?php esc_html_e( 'Important:', 'agent-press' ); ?></strong>
+			<?php esc_html_e( 'This password will only be shown once. Copy the message below and send it to OpenClaw.', 'agent-press' ); ?>
 		</div>
 
 		<div class="clawpress-json-block">
 			<pre class="clawpress-json" id="clawpress-json"><?php echo esc_html( 'Save these WordPress Application Password credentials and use them to connect to my site via the WordPress REST API:' . "\n" . $json ); ?></pre>
 			<button type="button" class="button clawpress-copy-btn" data-target="clawpress-json">
-				<?php esc_html_e( 'Copy', 'clawpress' ); ?>
+				<?php esc_html_e( 'Copy', 'agent-press' ); ?>
 			</button>
 		</div>
 
 		<p class="clawpress-next-step">
-			<?php esc_html_e( 'Paste this into your OpenClaw chat (Telegram, WhatsApp, etc.) and your agent will handle the rest.', 'clawpress' ); ?>
+			<?php esc_html_e( 'Paste this into your OpenClaw chat (Telegram, WhatsApp, etc.) and your agent will handle the rest.', 'agent-press' ); ?>
 		</p>
 		<?php
 	}
@@ -214,46 +214,46 @@ class ClawPress_Admin {
 		$created_date = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $existing['created'] );
 		$last_used    = ! empty( $existing['last_used'] )
 			? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $existing['last_used'] )
-			: __( 'Never', 'clawpress' );
+			: __( 'Never', 'agent-press' );
 		$stats        = ClawPress_Tracker::get_stats( get_current_user_id() );
 		?>
 		<div class="clawpress-notice-row">
 			<div class="clawpress-notice-box clawpress-notice-box--green">
-				<?php esc_html_e( 'Connected', 'clawpress' ); ?>
+				<?php esc_html_e( 'Connected', 'agent-press' ); ?>
 			</div>
 			<div class="clawpress-notice-box clawpress-notice-box--red">
-				<?php esc_html_e( 'Your OpenClaw agent can post here on your behalf.', 'clawpress' ); ?>
+				<?php esc_html_e( 'Your OpenClaw agent can post here on your behalf.', 'agent-press' ); ?>
 			</div>
 		</div>
 
 		<table class="clawpress-status-table">
 			<tr>
-				<th><?php esc_html_e( 'Created', 'clawpress' ); ?></th>
+				<th><?php esc_html_e( 'Created', 'agent-press' ); ?></th>
 				<td><?php echo esc_html( $created_date ); ?></td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Last Used', 'clawpress' ); ?></th>
+				<th><?php esc_html_e( 'Last Used', 'agent-press' ); ?></th>
 				<td><?php echo esc_html( $last_used ); ?></td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Posts', 'clawpress' ); ?></th>
+				<th><?php esc_html_e( 'Posts', 'agent-press' ); ?></th>
 				<td>
 					<?php
 					printf(
 						/* translators: %d: number of posts */
-						esc_html( _n( '%d post created via OpenClaw', '%d posts created via OpenClaw', $stats['post_count'], 'clawpress' ) ),
+						esc_html( _n( '%d post created via OpenClaw', '%d posts created via OpenClaw', $stats['post_count'], 'agent-press' ) ),
 						$stats['post_count']
 					);
 					?>
 				</td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Media', 'clawpress' ); ?></th>
+				<th><?php esc_html_e( 'Media', 'agent-press' ); ?></th>
 				<td>
 					<?php
 					printf(
 						/* translators: %d: number of files */
-						esc_html( _n( '%d file uploaded via OpenClaw', '%d files uploaded via OpenClaw', $stats['media_count'], 'clawpress' ) ),
+						esc_html( _n( '%d file uploaded via OpenClaw', '%d files uploaded via OpenClaw', $stats['media_count'], 'agent-press' ) ),
 						$stats['media_count']
 					);
 					?>
@@ -262,13 +262,13 @@ class ClawPress_Admin {
 		</table>
 
 		<?php if ( ! empty( $stats['recent_posts'] ) ) : ?>
-			<h3><?php esc_html_e( 'Recent OpenClaw Posts', 'clawpress' ); ?></h3>
+			<h3><?php esc_html_e( 'Recent OpenClaw Posts', 'agent-press' ); ?></h3>
 			<table class="widefat striped clawpress-recent-table">
 				<thead>
 					<tr>
-						<th><?php esc_html_e( 'Title', 'clawpress' ); ?></th>
-						<th><?php esc_html_e( 'Date', 'clawpress' ); ?></th>
-						<th><?php esc_html_e( 'Status', 'clawpress' ); ?></th>
+						<th><?php esc_html_e( 'Title', 'agent-press' ); ?></th>
+						<th><?php esc_html_e( 'Date', 'agent-press' ); ?></th>
+						<th><?php esc_html_e( 'Status', 'agent-press' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -276,7 +276,7 @@ class ClawPress_Admin {
 						<tr>
 							<td>
 								<a href="<?php echo esc_url( get_edit_post_link( $post->ID ) ); ?>">
-									<?php echo esc_html( $post->post_title ?: __( '(no title)', 'clawpress' ) ); ?>
+									<?php echo esc_html( $post->post_title ?: __( '(no title)', 'agent-press' ) ); ?>
 								</a>
 							</td>
 							<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $post->post_date ) ) ); ?></td>
@@ -289,10 +289,10 @@ class ClawPress_Admin {
 
 		<div class="clawpress-revoke-section">
 			<button type="button" class="button clawpress-revoke-btn" id="clawpress-revoke-btn">
-				<?php esc_html_e( 'Revoke Connection', 'clawpress' ); ?>
+				<?php esc_html_e( 'Revoke Connection', 'agent-press' ); ?>
 			</button>
 			<span class="clawpress-revoke-hint">
-				<?php esc_html_e( 'This will disconnect OpenClaw from your account.', 'clawpress' ); ?>
+				<?php esc_html_e( 'This will disconnect OpenClaw from your account.', 'agent-press' ); ?>
 			</span>
 		</div>
 		<?php
@@ -306,11 +306,11 @@ class ClawPress_Admin {
 		<div id="clawpress-card">
 			<p>
 				<button type="button" class="button button-primary clawpress-create-btn" id="clawpress-create-btn">
-					<?php esc_html_e( 'Connect OpenClaw', 'clawpress' ); ?>
+					<?php esc_html_e( 'Connect OpenClaw', 'agent-press' ); ?>
 				</button>
 			</p>
 			<p class="clawpress-create-hint">
-				<?php esc_html_e( 'This will generate a secure Application Password for OpenClaw. You\'ll be given credentials to paste into your OpenClaw config.', 'clawpress' ); ?>
+				<?php esc_html_e( 'This will generate a secure Application Password for OpenClaw. You\'ll be given credentials to paste into your OpenClaw config.', 'agent-press' ); ?>
 			</p>
 		</div>
 		<?php
@@ -325,22 +325,22 @@ class ClawPress_Admin {
 		<div class="wrap">
 			<h1>
 				<span>&#129438;</span>
-				<?php esc_html_e( 'ClawPress', 'clawpress' ); ?>
+				<?php esc_html_e( 'ClawPress', 'agent-press' ); ?>
 			</h1>
-			<p><?php esc_html_e( 'All users with active OpenClaw connections on this site.', 'clawpress' ); ?></p>
+			<p><?php esc_html_e( 'All users with active OpenClaw connections on this site.', 'agent-press' ); ?></p>
 
 			<?php if ( empty( $users_with_passwords ) ) : ?>
-				<p><em><?php esc_html_e( 'No users have connected OpenClaw yet.', 'clawpress' ); ?></em></p>
+				<p><em><?php esc_html_e( 'No users have connected OpenClaw yet.', 'agent-press' ); ?></em></p>
 			<?php else : ?>
 				<table class="widefat striped">
 					<thead>
 						<tr>
-							<th><?php esc_html_e( 'User', 'clawpress' ); ?></th>
-							<th><?php esc_html_e( 'Role', 'clawpress' ); ?></th>
-							<th><?php esc_html_e( 'Created', 'clawpress' ); ?></th>
-							<th><?php esc_html_e( 'Last Used', 'clawpress' ); ?></th>
-							<th><?php esc_html_e( 'Posts', 'clawpress' ); ?></th>
-							<th><?php esc_html_e( 'Media', 'clawpress' ); ?></th>
+							<th><?php esc_html_e( 'User', 'agent-press' ); ?></th>
+							<th><?php esc_html_e( 'Role', 'agent-press' ); ?></th>
+							<th><?php esc_html_e( 'Created', 'agent-press' ); ?></th>
+							<th><?php esc_html_e( 'Last Used', 'agent-press' ); ?></th>
+							<th><?php esc_html_e( 'Posts', 'agent-press' ); ?></th>
+							<th><?php esc_html_e( 'Media', 'agent-press' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -402,7 +402,7 @@ class ClawPress_Admin {
 				$created   = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created'] );
 				$last_used = ! empty( $item['last_used'] )
 					? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['last_used'] )
-					: __( 'Never', 'clawpress' );
+					: __( 'Never', 'agent-press' );
 
 				$results[] = array(
 					'user'      => $user,

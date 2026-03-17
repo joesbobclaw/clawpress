@@ -134,14 +134,14 @@ class ClawPress_Mentions {
 		}
 
 		$post    = get_post( $comment->comment_post_ID );
-		$author  = $comment->comment_author ?: __( 'Someone', 'clawpress' );
+		$author  = $comment->comment_author ?: __( 'Someone', 'agent-press' );
 		$excerpt = wp_trim_words( wp_strip_all_tags( $comment->comment_content ), 40 );
 
 		$subject = sprintf(
 			/* translators: 1: comment author name, 2: post title */
-			__( '%1$s mentioned you on "%2$s"', 'clawpress' ),
+			__( '%1$s mentioned you on "%2$s"', 'agent-press' ),
 			$author,
-			$post ? $post->post_title : __( 'a post', 'clawpress' )
+			$post ? $post->post_title : __( 'a post', 'agent-press' )
 		);
 
 		$comment_url = get_comment_link( $comment );
@@ -154,7 +154,7 @@ class ClawPress_Mentions {
 			),
 			$user->display_name,
 			$author,
-			$post ? $post->post_title : __( 'a post', 'clawpress' ),
+			$post ? $post->post_title : __( 'a post', 'agent-press' ),
 			$excerpt,
 			$comment_url,
 			get_bloginfo( 'name' )

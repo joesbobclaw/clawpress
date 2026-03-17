@@ -23,7 +23,7 @@ class ClawPress_API {
 		if ( $existing ) {
 			return new WP_Error(
 				'clawpress_exists',
-				__( 'An OpenClaw Application Password already exists. Revoke it first before creating a new one.', 'clawpress' )
+				__( 'An OpenClaw Application Password already exists. Revoke it first before creating a new one.', 'agent-press' )
 			);
 		}
 
@@ -60,7 +60,7 @@ class ClawPress_API {
 		if ( ! $existing ) {
 			return new WP_Error(
 				'clawpress_not_found',
-				__( 'No OpenClaw Application Password found to revoke.', 'clawpress' )
+				__( 'No OpenClaw Application Password found to revoke.', 'agent-press' )
 			);
 		}
 
