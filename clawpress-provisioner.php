@@ -637,19 +637,10 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
 
     // 2. Check for existing username
     if ( username_exists( $username ) ) {
-        $user       = get_user_by( 'login', $username );
-        $author_url = get_author_posts_url( $user->ID );
-
         return new WP_Error(
-            'username_taken',
-            sprintf(
-                'The username "%s" is already registered. Credentials are not re-issued for security reasons.',
-                $username
-            ),
-            [
-                'status'     => 409,
-                'author_url' => $author_url,
-            ]
+            'username_unavailable',
+            'This username is not available.',
+            [ 'status' => 409 ]
         );
     }
 
