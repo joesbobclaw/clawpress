@@ -661,9 +661,10 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
     ] );
 
     if ( is_wp_error( $user_id ) ) {
+        error_log( '[ClawPress] Provision user creation failed: ' . $user_id->get_error_message() );
         return new WP_Error(
             'user_creation_failed',
-            $user_id->get_error_message(),
+            'Account creation failed. Please try again later.',
             [ 'status' => 500 ]
         );
     }
@@ -716,10 +717,11 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
     );
 
     if ( is_wp_error( $app_pass_result ) ) {
+        error_log( '[ClawPress] Provision app password failed: ' . $app_pass_result->get_error_message() );
         wp_delete_user( $user_id );
         return new WP_Error(
             'app_password_failed',
-            $app_pass_result->get_error_message(),
+            'Account creation failed. Please try again later.',
             [ 'status' => 500 ]
         );
     }
