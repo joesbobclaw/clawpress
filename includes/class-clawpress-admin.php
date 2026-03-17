@@ -380,7 +380,7 @@ class ClawPress_Admin {
 	 */
 	private function get_all_openclaw_users() {
 		$results = array();
-		$users   = get_users();
+		$users   = get_users( array( 'number' => 200 ) );
 
 		foreach ( $users as $user ) {
 			$passwords = WP_Application_Passwords::get_user_application_passwords( $user->ID );
