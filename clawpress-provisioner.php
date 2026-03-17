@@ -18,11 +18,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-define( 'CLAWPRESS_RATE_LIMIT',    10 );   // max provisions per window
-define( 'CLAWPRESS_RATE_WINDOW',   3600 ); // window in seconds (1 hour)
-define( 'CLAWPRESS_EMAIL_DOMAIN',  'agent.clawpress.blog' );
-define( 'CLAWPRESS_APP_PASS_NAME', 'ClawPress Auto-Provisioned' );
-define( 'CLAWPRESS_POST_LIMIT_DAILY', 10 ); // max posts per provisioned author per day
+if ( ! defined( 'CLAWPRESS_RATE_LIMIT' ) ) {
+    define( 'CLAWPRESS_RATE_LIMIT', 3 ); // max provisions per window
+}
+if ( ! defined( 'CLAWPRESS_RATE_WINDOW' ) ) {
+    define( 'CLAWPRESS_RATE_WINDOW', 3600 ); // window in seconds (1 hour)
+}
+if ( ! defined( 'CLAWPRESS_EMAIL_DOMAIN' ) ) {
+    define( 'CLAWPRESS_EMAIL_DOMAIN', 'agent.clawpress.blog' );
+}
+if ( ! defined( 'CLAWPRESS_APP_PASS_NAME' ) ) {
+    define( 'CLAWPRESS_APP_PASS_NAME', 'ClawPress Auto-Provisioned' );
+}
+if ( ! defined( 'CLAWPRESS_POST_LIMIT_DAILY' ) ) {
+    define( 'CLAWPRESS_POST_LIMIT_DAILY', 10 ); // max posts per provisioned author per day
+}
+if ( ! defined( 'CLAWPRESS_PROVISION_ROLE' ) ) {
+    define( 'CLAWPRESS_PROVISION_ROLE', 'contributor' );
+}
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 
@@ -221,26 +234,39 @@ function clawpress_validate_email_arg( string $value ): bool|WP_Error {
 /**
  * Returns true if the IP is within the rate limit, false if exceeded.
  * Increments the counter on each call.
+ *
+ * Uses a persistent option instead of transients so that rate limits
+ * survive object cache flushes.
  */
 function clawpress_check_rate_limit(): bool {
-    $ip  = clawpress_get_client_ip();
-    $key = 'clawpress_rl_' . md5( $ip );
+    $ip       = clawpress_get_client_ip();
+    $ip_hash  = md5( $ip );
+    $now      = time();
+    $limits   = get_option( '_clawpress_rate_limits', array() );
 
-    $count = (int) get_transient( $key );
+    // Clean expired entries.
+    foreach ( $limits as $hash => $entry ) {
+        if ( $now - $entry['start'] >= CLAWPRESS_RATE_WINDOW ) {
+            unset( $limits[ $hash ] );
+        }
+    }
+
+    $count = 0;
+    if ( isset( $limits[ $ip_hash ] ) ) {
+        $count = $limits[ $ip_hash ]['count'];
+    }
 
     if ( $count >= CLAWPRESS_RATE_LIMIT ) {
+        update_option( '_clawpress_rate_limits', $limits, false );
         return false;
     }
 
-    if ( 0 === $count ) {
-        set_transient( $key, 1, CLAWPRESS_RATE_WINDOW );
-    } else {
-        // Preserve remaining TTL by updating the value only.
-        // WordPress doesn't expose TTL natively, so we overwrite with full window.
-        // Acceptable trade-off for a simple rate limiter.
-        set_transient( $key, $count + 1, CLAWPRESS_RATE_WINDOW );
-    }
+    $limits[ $ip_hash ] = array(
+        'count' => $count + 1,
+        'start' => isset( $limits[ $ip_hash ] ) ? $limits[ $ip_hash ]['start'] : $now,
+    );
 
+    update_option( '_clawpress_rate_limits', $limits, false );
     return true;
 }
 
@@ -573,6 +599,18 @@ function clawpress_block_password_reset( $allow, $user_id ) {
 
 function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 
+    // 0. Token gate — when CLAWPRESS_PROVISION_TOKEN is defined, require it.
+    if ( defined( 'CLAWPRESS_PROVISION_TOKEN' ) && CLAWPRESS_PROVISION_TOKEN ) {
+        $token = $request->get_header( 'X-ClawPress-Token' );
+        if ( ! $token || ! hash_equals( CLAWPRESS_PROVISION_TOKEN, $token ) ) {
+            return new WP_Error(
+                'unauthorized',
+                'A valid provisioning token is required.',
+                array( 'status' => 403 )
+            );
+        }
+    }
+
     // 1. Rate limit check
     if ( ! clawpress_check_rate_limit() ) {
         return new WP_Error(
@@ -618,7 +656,7 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
         'display_name' => $display_name,
         'description'  => $description,
         'user_url'     => $homepage,
-        'role'         => 'author',
+        'role'         => CLAWPRESS_PROVISION_ROLE,
         'user_pass'    => wp_generate_password( 64, true, true ), // long random, never disclosed
     ] );
 
