@@ -271,21 +271,30 @@ function clawpress_check_rate_limit(): bool {
 }
 
 function clawpress_get_client_ip(): string {
-    $headers = [
-        'HTTP_CF_CONNECTING_IP', // Cloudflare
-        'HTTP_X_REAL_IP',
-        'HTTP_X_FORWARDED_FOR',
-        'REMOTE_ADDR',
-    ];
+    // Only trust proxy headers when explicitly configured (e.g. behind Cloudflare
+    // or a reverse proxy that overwrites these headers).
+    if ( defined( 'CLAWPRESS_TRUST_PROXY' ) && CLAWPRESS_TRUST_PROXY ) {
+        $proxy_headers = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_REAL_IP',
+            'HTTP_X_FORWARDED_FOR',
+        ];
 
-    foreach ( $headers as $header ) {
-        if ( ! empty( $_SERVER[ $header ] ) ) {
-            // X-Forwarded-For can be a comma-separated list; take the first.
-            $ip = trim( explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) ) )[0] );
-            if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-                return $ip;
+        foreach ( $proxy_headers as $header ) {
+            if ( ! empty( $_SERVER[ $header ] ) ) {
+                // X-Forwarded-For can be a comma-separated list; take the first.
+                $ip = trim( explode( ',', sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) ) )[0] );
+                if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+                    return $ip;
+                }
             }
         }
+    }
+
+    // Default: trust only REMOTE_ADDR (cannot be spoofed at the TCP level).
+    $ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '0.0.0.0';
+    if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+        return $ip;
     }
 
     return '0.0.0.0';
