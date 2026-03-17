@@ -140,7 +140,7 @@ class ClawPress_Admin {
 		$user_id        = get_current_user_id();
 		$error_message  = get_transient( 'clawpress_error_' . $user_id );
 		$created_info   = get_transient( 'clawpress_created_' . $user_id );
-		$just_created   = isset( $_GET['clawpress_created'] ) && '1' === $_GET['clawpress_created'] && $created_info;
+		$just_created   = ! empty( $created_info );
 
 		if ( $error_message ) {
 			delete_transient( 'clawpress_error_' . $user_id );
