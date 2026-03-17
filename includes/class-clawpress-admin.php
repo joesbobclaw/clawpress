@@ -89,7 +89,7 @@ class ClawPress_Admin {
 	 * Handle the AJAX create request.
 	 */
 	public function handle_create_ajax() {
-		if ( ! current_user_can( 'exist' ) ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
 			wp_send_json_error( __( 'You do not have permission to do this.', 'clawpress' ) );
 		}
 
@@ -110,7 +110,7 @@ class ClawPress_Admin {
 	 * Handle the AJAX revoke request.
 	 */
 	public function handle_revoke_ajax() {
-		if ( ! current_user_can( 'exist' ) ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
 			wp_send_json_error( __( 'You do not have permission to do this.', 'clawpress' ) );
 		}
 
