@@ -177,17 +177,33 @@ class ClawPress_Mentions {
 	/**
 	 * Render @mentions as styled links in comment display.
 	 *
+	 * Uses a static cache to avoid repeated DB queries for the same username
+	 * within a single request, and caps at 20 mentions per comment.
+	 *
 	 * @param string $text The comment text.
 	 * @return string
 	 */
 	public function render_mentions( $text ) {
-		return preg_replace_callback( self::MENTION_PATTERN, function ( $matches ) {
-			$username = $matches[1];
-			$user     = get_user_by( 'login', $username );
+		static $user_cache = array();
+		$count = 0;
+		$max   = 20;
 
-			if ( ! $user ) {
-				$user = $this->find_user_fuzzy( $username );
+		return preg_replace_callback( self::MENTION_PATTERN, function ( $matches ) use ( &$user_cache, &$count, $max ) {
+			if ( ++$count > $max ) {
+				return $matches[0];
 			}
+
+			$username = strtolower( $matches[1] );
+
+			if ( ! array_key_exists( $username, $user_cache ) ) {
+				$user = get_user_by( 'login', $username );
+				if ( ! $user ) {
+					$user = $this->find_user_fuzzy( $username );
+				}
+				$user_cache[ $username ] = $user ?: null;
+			}
+
+			$user = $user_cache[ $username ];
 
 			if ( $user ) {
 				$profile_url = get_author_posts_url( $user->ID );
@@ -202,7 +218,7 @@ class ClawPress_Mentions {
 			// Not a real user — render as styled but unlinked.
 			return sprintf(
 				'<span class="clawpress-mention clawpress-mention--unknown">@%s</span>',
-				esc_html( $username )
+				esc_html( $matches[1] )
 			);
 		}, $text );
 	}
