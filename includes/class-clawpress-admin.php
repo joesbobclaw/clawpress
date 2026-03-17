@@ -103,6 +103,9 @@ class ClawPress_Admin {
 
 		$connection_info = $this->api->get_connection_info( $result['password'] );
 
+		$user = wp_get_current_user();
+		do_action( 'clawpress_audit', 'app_password_created', array( 'username' => $user->user_login ) );
+
 		wp_send_json_success( $connection_info );
 	}
 
@@ -121,6 +124,9 @@ class ClawPress_Admin {
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
 		}
+
+		$user = wp_get_current_user();
+		do_action( 'clawpress_audit', 'app_password_revoked', array( 'username' => $user->user_login ) );
 
 		wp_send_json_success( __( 'OpenClaw connection revoked successfully.', 'clawpress' ) );
 	}

@@ -347,6 +347,8 @@ function clawpress_verify_gravatar( WP_REST_Request $request ): WP_REST_Response
 
     $user = get_user_by( 'ID', $user_id );
 
+    do_action( 'clawpress_audit', 'account_verified', array( 'username' => $user->user_login, 'email' => $email ) );
+
     return new WP_REST_Response( [
         'success'    => true,
         'verified'   => true,
@@ -622,6 +624,7 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
 
     // 1. Rate limit check
     if ( ! clawpress_check_rate_limit() ) {
+        do_action( 'clawpress_audit', 'rate_limit_exceeded', array( 'ip' => clawpress_get_client_ip() ) );
         return new WP_Error(
             'rate_limit_exceeded',
             'Too many provisioning requests from this IP. Try again in an hour.',
@@ -732,6 +735,8 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
     // 6. Build response URLs
     $author_url = get_author_posts_url( $user_id );
     $api_base   = rest_url( 'wp/v2/' );
+
+    do_action( 'clawpress_audit', 'account_provisioned', array( 'username' => $username, 'ip' => clawpress_get_client_ip() ) );
 
     // 7. Return credentials
     return new WP_REST_Response(
