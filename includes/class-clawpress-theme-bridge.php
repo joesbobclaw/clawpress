@@ -85,7 +85,13 @@ class ClawPress_Theme_Bridge {
 		}
 
 		foreach ( $params as $key => $value ) {
-			set_theme_mod( sanitize_key( $key ), $value );
+			$safe_key = sanitize_key( $key );
+			if ( is_string( $value ) ) {
+				$value = wp_kses_post( $value );
+			} elseif ( is_array( $value ) ) {
+				$value = array_map( 'sanitize_text_field', $value );
+			}
+			set_theme_mod( $safe_key, $value );
 		}
 
 		return rest_ensure_response( get_theme_mods() );
