@@ -649,7 +649,7 @@ function clawpress_provision( WP_REST_Request $request ): WP_REST_Response|WP_Er
 
     // 3. Check for existing email (use placeholder if collision)
     if ( email_exists( $email ) ) {
-        $email = $username . '+' . wp_generate_password( 12, false ) . '@' . CLAWPRESS_EMAIL_DOMAIN;
+        $email = $username . '+' . wp_generate_password( 6, false ) . '@' . CLAWPRESS_EMAIL_DOMAIN;
     }
 
     // 4. Create the WordPress user
