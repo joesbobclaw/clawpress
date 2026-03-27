@@ -172,6 +172,35 @@ class Agent_Access_Migrator {
 	 * @param string[] $keys List of meta key names.
 	 * @return int[]
 	 */
+	/**
+	 * Fast check: does ANY legacy _clawpress_* meta row exist?
+	 *
+	 * Uses a single LIMIT 1 query on usermeta instead of a full get_users()
+	 * with OR meta_query (which caused 504 timeouts on larger sites).
+	 *
+	 * @return bool
+	 */
+	private function has_any_legacy_meta() {
+		global $wpdb;
+
+		$legacy_keys = array_keys( Agent_Access_Compat::get_user_meta_map() );
+		if ( empty( $legacy_keys ) ) {
+			return false;
+		}
+
+		$placeholders = implode( ',', array_fill( 0, count( $legacy_keys ), '%s' ) );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT umeta_id FROM {$wpdb->usermeta} WHERE meta_key IN ($placeholders) LIMIT 1",
+				...$legacy_keys
+			)
+		);
+
+		return null !== $row;
+	}
+
 	private function get_users_with_legacy_meta( array $keys ) {
 		if ( empty( $keys ) ) {
 			return array();
@@ -242,9 +271,9 @@ class Agent_Access_Migrator {
 		}
 
 		// Quick check: is there at least one user with legacy meta?
-		$has_legacy = ! empty( $this->get_users_with_legacy_meta(
-			array_keys( Agent_Access_Compat::get_user_meta_map() )
-		) );
+		// Use a lightweight direct query instead of get_users() to avoid
+		// expensive meta_query OR joins on every admin page load.
+		$has_legacy = $this->has_any_legacy_meta();
 
 		if ( ! $has_legacy ) {
 			return;
