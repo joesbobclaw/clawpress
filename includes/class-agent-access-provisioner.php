@@ -151,9 +151,11 @@ class Agent_Access_Provisioner {
 
 	/**
 	 * Check if current user is a logged-in provisioned account.
+	 *
+	 * Uses the compat layer so legacy _clawpress_provisioned users are recognised.
 	 */
 	public function is_provisioned_user() {
-		return is_user_logged_in() && get_user_meta( get_current_user_id(), '_agent_access_provisioned', true );
+		return is_user_logged_in() && Agent_Access_Compat::get_meta( get_current_user_id(), '_agent_access_provisioned' );
 	}
 
 	// ── Argument schema ──────────────────────────────────────────────────────
@@ -403,9 +405,13 @@ class Agent_Access_Provisioner {
 
 	public function get_fingerprints() {
 		$provisioned_users = get_users( array(
-			'meta_key'   => '_agent_access_provisioned',
-			'meta_value' => '1',
-			'fields'     => 'ID',
+			'meta_query' => array(
+				'relation' => 'OR',
+				array( 'key' => '_agent_access_provisioned', 'compare' => 'EXISTS' ),
+				array( 'key' => '_clawpress_provisioned',   'compare' => 'EXISTS' ),
+			),
+			'fields' => 'ID',
+			'number' => -1,
 		) );
 
 		$fingerprints   = array();
@@ -413,7 +419,7 @@ class Agent_Access_Provisioner {
 		$ua_counts      = array();
 
 		foreach ( $provisioned_users as $uid ) {
-			$fp   = get_user_meta( $uid, '_agent_access_fingerprint', true );
+			$fp   = Agent_Access_Compat::get_meta( $uid, '_agent_access_fingerprint' );
 			$user = get_user_by( 'ID', $uid );
 
 			$fingerprints[] = array(
@@ -445,7 +451,7 @@ class Agent_Access_Provisioner {
 		$user_id = get_current_user_id();
 		$email   = $request->get_param( 'email' );
 
-		if ( get_user_meta( $user_id, '_agent_access_verified', true ) ) {
+		if ( Agent_Access_Compat::get_meta( $user_id, '_agent_access_verified' ) ) {
 			return new WP_REST_Response( array(
 				'success'  => true,
 				'verified' => true,
@@ -454,7 +460,7 @@ class Agent_Access_Provisioner {
 		}
 
 		// Require email verification first.
-		if ( ! get_user_meta( $user_id, '_agent_access_email_verified', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $user_id, '_agent_access_email_verified' ) ) {
 			return new WP_Error(
 				'email_not_verified',
 				'Verify your email first. POST to /agent-access/v1/verify/email.',
@@ -462,7 +468,7 @@ class Agent_Access_Provisioner {
 			);
 		}
 
-		$verified_email = get_user_meta( $user_id, '_agent_access_email_verified_address', true );
+		$verified_email = Agent_Access_Compat::get_meta( $user_id, '_agent_access_email_verified_address' );
 		if ( strtolower( $verified_email ) !== strtolower( $email ) ) {
 			return new WP_Error( 'email_mismatch', 'Email must match your verified email.', array( 'status' => 400 ) );
 		}
@@ -506,11 +512,11 @@ class Agent_Access_Provisioner {
 		$user_id = get_current_user_id();
 		$email   = $request->get_param( 'email' );
 
-		if ( get_user_meta( $user_id, '_agent_access_email_verified', true ) ) {
+		if ( Agent_Access_Compat::get_meta( $user_id, '_agent_access_email_verified' ) ) {
 			return new WP_REST_Response( array(
 				'success' => true,
 				'message' => 'Email is already verified.',
-				'email'   => get_user_meta( $user_id, '_agent_access_email_verified_address', true ),
+				'email'   => Agent_Access_Compat::get_meta( $user_id, '_agent_access_email_verified_address' ),
 			), 200 );
 		}
 
@@ -556,7 +562,7 @@ class Agent_Access_Provisioner {
 		$user_id = get_current_user_id();
 		$code    = $request->get_param( 'code' );
 
-		if ( get_user_meta( $user_id, '_agent_access_email_verified', true ) ) {
+		if ( Agent_Access_Compat::get_meta( $user_id, '_agent_access_email_verified' ) ) {
 			return new WP_REST_Response( array( 'success' => true, 'message' => 'Already verified.' ), 200 );
 		}
 
@@ -599,15 +605,15 @@ class Agent_Access_Provisioner {
 			return new WP_Error( 'user_not_found', 'No account found.', array( 'status' => 404 ) );
 		}
 
-		if ( ! get_user_meta( $user->ID, '_agent_access_provisioned', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $user->ID, '_agent_access_provisioned' ) ) {
 			return new WP_Error( 'not_provisioned', 'Not a provisioned account.', array( 'status' => 400 ) );
 		}
 
-		if ( ! get_user_meta( $user->ID, '_agent_access_email_verified', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $user->ID, '_agent_access_email_verified' ) ) {
 			return new WP_Error( 'email_not_verified', 'Recovery requires a verified email.', array( 'status' => 400 ) );
 		}
 
-		$verified_email = get_user_meta( $user->ID, '_agent_access_email_verified_address', true );
+		$verified_email = Agent_Access_Compat::get_meta( $user->ID, '_agent_access_email_verified_address' );
 		if ( strtolower( $verified_email ) !== strtolower( $email ) ) {
 			return new WP_Error( 'email_mismatch', 'Email does not match.', array( 'status' => 403 ) );
 		}
@@ -663,10 +669,10 @@ class Agent_Access_Provisioner {
 		if ( ! $authordata ) {
 			return $display_name;
 		}
-		if ( ! get_user_meta( $authordata->ID, '_agent_access_provisioned', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $authordata->ID, '_agent_access_provisioned' ) ) {
 			return $display_name;
 		}
-		if ( ! get_user_meta( $authordata->ID, '_agent_access_verified', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $authordata->ID, '_agent_access_verified' ) ) {
 			return $display_name;
 		}
 
@@ -681,8 +687,8 @@ class Agent_Access_Provisioner {
 	}
 
 	public function badge_in_api( $response, $user, $request ) {
-		if ( get_user_meta( $user->ID, '_agent_access_provisioned', true ) &&
-		     get_user_meta( $user->ID, '_agent_access_verified', true ) ) {
+		if ( Agent_Access_Compat::get_meta( $user->ID, '_agent_access_provisioned' ) &&
+		     Agent_Access_Compat::get_meta( $user->ID, '_agent_access_verified' ) ) {
 			$response->data['agent_access_verified'] = true;
 		}
 		return $response;
@@ -706,8 +712,8 @@ class Agent_Access_Provisioner {
 		if ( ! $author_id ) {
 			return false;
 		}
-		return get_user_meta( $author_id, '_agent_access_provisioned', true )
-		    && ! get_user_meta( $author_id, '_agent_access_verified', true );
+		return Agent_Access_Compat::get_meta( $author_id, '_agent_access_provisioned' )
+		    && ! Agent_Access_Compat::get_meta( $author_id, '_agent_access_verified' );
 	}
 
 	public function maybe_noindex() {
@@ -737,13 +743,23 @@ class Agent_Access_Provisioner {
 	}
 
 	public function filter_sitemap( $args, $post_type ) {
+		// Include legacy-keyed users in the unverified set.
 		$unverified = get_users( array(
 			'meta_query' => array(
 				'relation' => 'AND',
-				array( 'key' => '_agent_access_provisioned', 'value' => '1' ),
-				array( 'key' => '_agent_access_verified', 'compare' => 'NOT EXISTS' ),
+				array(
+					'relation' => 'OR',
+					array( 'key' => '_agent_access_provisioned', 'compare' => 'EXISTS' ),
+					array( 'key' => '_clawpress_provisioned',   'compare' => 'EXISTS' ),
+				),
+				array(
+					'relation' => 'AND',
+					array( 'key' => '_agent_access_verified', 'compare' => 'NOT EXISTS' ),
+					array( 'key' => '_clawpress_verified',    'compare' => 'NOT EXISTS' ),
+				),
 			),
 			'fields' => 'ID',
+			'number' => -1,
 		) );
 
 		if ( ! empty( $unverified ) ) {
@@ -760,7 +776,7 @@ class Agent_Access_Provisioner {
 		}
 
 		$user_id = get_current_user_id();
-		if ( ! get_user_meta( $user_id, '_agent_access_provisioned', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $user_id, '_agent_access_provisioned' ) ) {
 			return $prepared_post;
 		}
 
@@ -792,13 +808,13 @@ class Agent_Access_Provisioner {
 	// ── Akismet spam check ───────────────────────────────────────────────────
 
 	public function check_post_spam( $post_id, $post ) {
-		if ( ! get_user_meta( $post->post_author, '_agent_access_provisioned', true ) ) {
+		if ( ! Agent_Access_Compat::get_meta( $post->post_author, '_agent_access_provisioned' ) ) {
 			return;
 		}
 		if ( 'publish' !== $post->post_status ) {
 			return;
 		}
-		if ( get_post_meta( $post_id, '_agent_access_akismet_checked', true ) ) {
+		if ( Agent_Access_Compat::get_post_meta( $post_id, '_agent_access_akismet_checked' ) ) {
 			return;
 		}
 		if ( ! function_exists( 'akismet_http_post' ) && ! class_exists( 'Akismet' ) ) {
@@ -810,7 +826,7 @@ class Agent_Access_Provisioner {
 
 		$data = array(
 			'blog'                 => home_url(),
-			'user_ip'              => get_user_meta( $post->post_author, '_agent_access_provisioned_ip', true ) ?: '0.0.0.0',
+			'user_ip'              => Agent_Access_Compat::get_meta( $post->post_author, '_agent_access_provisioned_ip' ) ?: '0.0.0.0',
 			'user_agent'           => 'Agent Access Provisioner',
 			'comment_type'         => 'blog-post',
 			'comment_author'       => $user->display_name,
@@ -846,14 +862,14 @@ class Agent_Access_Provisioner {
 			return $user;
 		}
 		$found = get_user_by( 'login', $username );
-		if ( $found && get_user_meta( $found->ID, '_agent_access_provisioned', true ) ) {
+		if ( $found && Agent_Access_Compat::get_meta( $found->ID, '_agent_access_provisioned' ) ) {
 			return new WP_Error( 'agent_access_no_login', 'This account is API-only and cannot log in via wp-login.' );
 		}
 		return $user;
 	}
 
 	public function block_password_reset( $allow, $user_id ) {
-		if ( get_user_meta( $user_id, '_agent_access_provisioned', true ) ) {
+		if ( Agent_Access_Compat::get_meta( $user_id, '_agent_access_provisioned' ) ) {
 			return false;
 		}
 		return $allow;

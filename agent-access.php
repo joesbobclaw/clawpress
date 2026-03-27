@@ -22,6 +22,8 @@ define( 'AGENT_ACCESS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_ACCESS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_ACCESS_APP_PASSWORD_NAME', 'Agent Access' );
 
+require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-compat.php';
+require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-migrator.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-api.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-admin.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-tracker.php';
@@ -30,13 +32,23 @@ require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-provisioner.
 
 /**
  * Initialize the plugin.
+ *
+ * Compat and migrator are loaded first so the compat layer's REST routes and
+ * meta helpers are available to all other components.
  */
 function agent_access_init() {
-	$api          = new Agent_Access_API();
-	$admin        = new Agent_Access_Admin( $api );
-	$tracker      = new Agent_Access_Tracker();
-	$mentions     = new Agent_Access_Mentions();
-	$provisioner  = new Agent_Access_Provisioner();
+	// Compat: register legacy clawpress/v1 REST route proxies.
+	Agent_Access_Compat::init();
+
+	// Migrator: admin notice + AJAX handler (+ WP-CLI via its own hook).
+	$migrator = new Agent_Access_Migrator();
+	$migrator->init();
+
+	$api         = new Agent_Access_API();
+	$admin       = new Agent_Access_Admin( $api );
+	$tracker     = new Agent_Access_Tracker();
+	$mentions    = new Agent_Access_Mentions();
+	$provisioner = new Agent_Access_Provisioner();
 	$admin->init();
 	$tracker->init();
 	$mentions->init();
