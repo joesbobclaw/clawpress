@@ -26,6 +26,7 @@ require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-api.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-admin.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-tracker.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-mentions.php';
+require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-provisioner.php';
 
 /**
  * Initialize the plugin.
@@ -33,10 +34,12 @@ require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-mentions.php
 function agent_access_init() {
 	$api          = new Agent_Access_API();
 	$admin        = new Agent_Access_Admin( $api );
-	$tracker  = new Agent_Access_Tracker();
-	$mentions = new Agent_Access_Mentions();
+	$tracker      = new Agent_Access_Tracker();
+	$mentions     = new Agent_Access_Mentions();
+	$provisioner  = new Agent_Access_Provisioner();
 	$admin->init();
 	$tracker->init();
 	$mentions->init();
+	$provisioner->init();
 }
 add_action( 'plugins_loaded', 'agent_access_init' );
