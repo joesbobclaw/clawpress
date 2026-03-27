@@ -231,6 +231,14 @@ class Agent_Access_Compat {
 	 */
 	public static function proxy_request( WP_REST_Request $original, $new_path ) {
 		$proxy = new WP_REST_Request( $original->get_method(), $new_path );
+
+		// Copy JSON params (from Content-Type: application/json bodies).
+		$json = $original->get_json_params();
+		if ( ! empty( $json ) ) {
+			$proxy->set_body( $original->get_body() );
+			$proxy->set_header( 'Content-Type', 'application/json' );
+		}
+
 		$proxy->set_body_params( $original->get_body_params() );
 		$proxy->set_query_params( $original->get_query_params() );
 
