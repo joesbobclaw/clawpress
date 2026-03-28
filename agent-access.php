@@ -29,6 +29,8 @@ require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-admin.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-tracker.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-mentions.php';
 require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-provisioner.php';
+require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-artifacts.php';
+require_once AGENT_ACCESS_PLUGIN_DIR . 'includes/class-agent-access-chat.php';
 
 /**
  * Initialize the plugin.
@@ -53,5 +55,40 @@ function agent_access_init() {
 	$tracker->init();
 	$mentions->init();
 	$provisioner->init();
+
+	// Module: Artifacts.
+	Agent_Access_Artifacts::instance()->init();
+
+	// Module: Agent Chat.
+	Agent_Access_Chat::instance()->init();
 }
 add_action( 'plugins_loaded', 'agent_access_init' );
+
+/**
+ * Plugin activation: register artifact capabilities and flush rewrite rules.
+ */
+function agent_access_activate() {
+	// Artifact capabilities — requires the CPT to be registered first.
+	// We call the static helper directly since init() hasn't fired yet at activation time.
+	// The CPT is registered on 'init' so we need to trigger it manually here.
+	if ( class_exists( 'Agent_Access_Artifacts' ) ) {
+		Agent_Access_Artifacts::instance()->register_post_type();
+		Agent_Access_Artifacts::activate();
+	}
+
+	// Chat rewrite rule.
+	if ( class_exists( 'Agent_Access_Chat' ) ) {
+		add_rewrite_rule( '^agent-chat/?$', 'index.php?agent_chat_page=1', 'top' );
+	}
+
+	flush_rewrite_rules();
+}
+register_activation_hook( __FILE__, 'agent_access_activate' );
+
+/**
+ * Plugin deactivation: flush rewrite rules.
+ */
+function agent_access_deactivate() {
+	flush_rewrite_rules();
+}
+register_deactivation_hook( __FILE__, 'agent_access_deactivate' );

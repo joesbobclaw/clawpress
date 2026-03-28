@@ -483,10 +483,14 @@ class Agent_Access_Admin {
 		}
 
 		$has_provisioner     = class_exists( 'Agent_Access_Provisioner' );
+		$has_artifacts       = class_exists( 'Agent_Access_Artifacts' );
+		$has_chat            = class_exists( 'Agent_Access_Chat' );
 		$connected_users     = $this->get_all_openclaw_users();
 		$connected_count     = count( $connected_users );
 		$provisioned_count   = $has_provisioner ? $this->get_provisioned_count() : 0;
 		$recent_activity     = $this->get_recent_activity_count();
+		$artifacts_count     = $has_artifacts ? $this->get_artifact_count() : 0;
+		$chat_messages_count = $has_chat ? Agent_Access_Chat::get_message_count() : 0;
 		$profile_url         = admin_url( 'profile.php' ) . '#agent-access';
 		$connected_page_url  = admin_url( 'admin.php?page=agent-access-connected' );
 		$provisioner_enabled = $has_provisioner ? $this->is_provisioner_enabled() : false;
@@ -531,6 +535,26 @@ class Agent_Access_Admin {
 						<?php esc_html_e( 'Posts This Month', 'agent-access' ); ?>
 					</div>
 				</div>
+
+				<?php if ( $has_artifacts ) : ?>
+				<div class="agent-access-stat-card">
+					<div class="agent-access-stat-number"><?php echo esc_html( $artifacts_count ); ?></div>
+					<div class="agent-access-stat-label">
+						<span class="dashicons dashicons-art"></span>
+						<?php esc_html_e( 'Artifacts', 'agent-access' ); ?>
+					</div>
+				</div>
+				<?php endif; ?>
+
+				<?php if ( $has_chat ) : ?>
+				<div class="agent-access-stat-card">
+					<div class="agent-access-stat-number"><?php echo esc_html( $chat_messages_count ); ?></div>
+					<div class="agent-access-stat-label">
+						<span class="dashicons dashicons-format-chat"></span>
+						<?php esc_html_e( 'Chat Messages', 'agent-access' ); ?>
+					</div>
+				</div>
+				<?php endif; ?>
 			</div>
 
 			<?php /* ── Two-column layout: modes ── */ ?>
@@ -615,6 +639,92 @@ class Agent_Access_Admin {
 							</p>
 							<p class="agent-access-muted">
 								<?php esc_html_e( 'With provisioning enabled, external AI agents can self-register and receive their own WordPress accounts automatically via the REST API.', 'agent-access' ); ?>
+							</p>
+						<?php endif; ?>
+					</div>
+				</div>
+
+				<?php /* ── Module 3: Artifacts ── */ ?>
+				<div class="agent-access-card postbox <?php echo $has_artifacts ? '' : 'agent-access-card--inactive'; ?>">
+					<div class="agent-access-card-header">
+						<span class="dashicons dashicons-art agent-access-card-icon"></span>
+						<h2 class="agent-access-card-title">
+							<?php esc_html_e( 'Module — Artifacts', 'agent-access' ); ?>
+						</h2>
+						<?php if ( $has_artifacts ) : ?>
+							<span class="agent-access-status-pill agent-access-status-pill--active">
+								<span class="dashicons dashicons-marker"></span>
+								<?php esc_html_e( 'Active', 'agent-access' ); ?>
+							</span>
+						<?php else : ?>
+							<span class="agent-access-status-pill agent-access-status-pill--unavailable">
+								<?php esc_html_e( 'Not Available', 'agent-access' ); ?>
+							</span>
+						<?php endif; ?>
+					</div>
+					<div class="agent-access-card-body">
+						<?php if ( $has_artifacts ) : ?>
+							<p>
+								<?php esc_html_e( 'Deploy self-contained HTML/JS/CSS apps via the REST API. Agents POST raw HTML to the artifacts endpoint — scripts and styles are extracted to upload-dir files and rendered on a standalone page.', 'agent-access' ); ?>
+							</p>
+							<ul class="agent-access-feature-list">
+								<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'POST HTML to wp/v2/artifacts, get a public URL instantly', 'agent-access' ); ?></li>
+								<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Scripts and styles extracted to files for strict CSP', 'agent-access' ); ?></li>
+								<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Rendered at /artifacts/{slug}/ with full WordPress context', 'agent-access' ); ?></li>
+							</ul>
+							<div class="agent-access-card-actions">
+								<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=artifact' ) ); ?>" class="button button-primary">
+									<span class="dashicons dashicons-art"></span>
+									<?php esc_html_e( 'View Artifacts', 'agent-access' ); ?>
+								</a>
+								<code class="agent-access-endpoint-pill">POST <?php echo esc_html( rest_url( 'wp/v2/artifacts' ) ); ?></code>
+							</div>
+						<?php else : ?>
+							<p class="agent-access-muted">
+								<?php esc_html_e( 'The Artifacts module is not available. It is included in Agent Access when the plugin is fully installed.', 'agent-access' ); ?>
+							</p>
+						<?php endif; ?>
+					</div>
+				</div>
+
+				<?php /* ── Module 4: Agent Chat ── */ ?>
+				<div class="agent-access-card postbox <?php echo $has_chat ? '' : 'agent-access-card--inactive'; ?>">
+					<div class="agent-access-card-header">
+						<span class="dashicons dashicons-format-chat agent-access-card-icon"></span>
+						<h2 class="agent-access-card-title">
+							<?php esc_html_e( 'Module — Agent Chat', 'agent-access' ); ?>
+						</h2>
+						<?php if ( $has_chat ) : ?>
+							<span class="agent-access-status-pill agent-access-status-pill--active">
+								<span class="dashicons dashicons-marker"></span>
+								<?php esc_html_e( 'Active', 'agent-access' ); ?>
+							</span>
+						<?php else : ?>
+							<span class="agent-access-status-pill agent-access-status-pill--unavailable">
+								<?php esc_html_e( 'Not Available', 'agent-access' ); ?>
+							</span>
+						<?php endif; ?>
+					</div>
+					<div class="agent-access-card-body">
+						<?php if ( $has_chat ) : ?>
+							<p>
+								<?php esc_html_e( 'CPT-based multi-agent coordination chat. Human and agent messages are stored as WordPress posts and accessible via REST API. A dark-themed real-time frontend lives at /agent-chat/.', 'agent-access' ); ?>
+							</p>
+							<ul class="agent-access-feature-list">
+								<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'REST endpoints: send, messages, channels', 'agent-access' ); ?></li>
+								<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Multi-channel support with live polling', 'agent-access' ); ?></li>
+								<li><span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Requires login — accessible at /agent-chat/', 'agent-access' ); ?></li>
+							</ul>
+							<div class="agent-access-card-actions">
+								<a href="<?php echo esc_url( home_url( '/agent-chat/' ) ); ?>" class="button button-primary" target="_blank">
+									<span class="dashicons dashicons-format-chat"></span>
+									<?php esc_html_e( 'Open Chat', 'agent-access' ); ?>
+								</a>
+								<code class="agent-access-endpoint-pill">POST <?php echo esc_html( rest_url( 'agent-access/v1/chat/send' ) ); ?></code>
+							</div>
+						<?php else : ?>
+							<p class="agent-access-muted">
+								<?php esc_html_e( 'The Agent Chat module is not available. It is included in Agent Access when the plugin is fully installed.', 'agent-access' ); ?>
 							</p>
 						<?php endif; ?>
 					</div>
@@ -827,6 +937,16 @@ class Agent_Access_Admin {
 		// The provisioner is always enabled once the class is instantiated (its init
 		// registers the routes); we just confirm the class exists.
 		return true;
+	}
+
+	/**
+	 * Count total published artifacts.
+	 *
+	 * @return int
+	 */
+	private function get_artifact_count() {
+		$counts = wp_count_posts( 'artifact' );
+		return isset( $counts->publish ) ? (int) $counts->publish : 0;
 	}
 
 	/**
