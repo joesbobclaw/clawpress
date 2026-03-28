@@ -1,5 +1,8 @@
 /**
  * Agent Access Admin JavaScript
+ *
+ * Handles create/revoke AJAX on profile pages (own and admin-managed).
+ * Passes user_id when managing another user's profile.
  */
 (function () {
 	'use strict';
@@ -11,6 +14,34 @@
 	});
 
 	/**
+	 * Get the target user ID for AJAX requests.
+	 *
+	 * On own profile: agentAccess.profile_user_id === current user (or 0 → server uses current).
+	 * On another user's profile (admin): agentAccess.profile_user_id is their ID.
+	 */
+	function getProfileUserId() {
+		return (agentAccess.profile_user_id && agentAccess.profile_user_id > 0)
+			? agentAccess.profile_user_id
+			: 0;
+	}
+
+	/**
+	 * Build a POST body string, appending user_id when non-zero.
+	 *
+	 * @param {string} action
+	 * @param {string} nonce
+	 * @returns {string}
+	 */
+	function buildPostBody(action, nonce) {
+		var body = 'action=' + encodeURIComponent(action) + '&nonce=' + encodeURIComponent(nonce);
+		var uid  = getProfileUserId();
+		if (uid > 0) {
+			body += '&user_id=' + encodeURIComponent(uid);
+		}
+		return body;
+	}
+
+	/**
 	 * Create connection via AJAX.
 	 */
 	function initCreateButton() {
@@ -18,7 +49,7 @@
 		if (!btn) return;
 
 		btn.addEventListener('click', function () {
-			btn.disabled = true;
+			btn.disabled    = true;
 			btn.textContent = agentAccess.creating_text;
 
 			var xhr = new XMLHttpRequest();
@@ -31,7 +62,7 @@
 					response = JSON.parse(xhr.responseText);
 				} catch (e) {
 					alert('Unexpected error. Please reload the page.');
-					btn.disabled = false;
+					btn.disabled    = false;
 					btn.textContent = 'Connect Agent';
 					return;
 				}
@@ -40,18 +71,18 @@
 					renderCreatedState(response.data);
 				} else {
 					alert(response.data || 'An error occurred.');
-					btn.disabled = false;
+					btn.disabled    = false;
 					btn.textContent = 'Connect Agent';
 				}
 			};
 
 			xhr.onerror = function () {
 				alert('Network error. Please try again.');
-				btn.disabled = false;
+				btn.disabled    = false;
 				btn.textContent = 'Connect Agent';
 			};
 
-			xhr.send('action=agent_access_create&nonce=' + encodeURIComponent(agentAccess.create_nonce));
+			xhr.send(buildPostBody('agent_access_create', agentAccess.create_nonce));
 		});
 	}
 
@@ -62,7 +93,7 @@
 		var card = document.getElementById('agent-access-card');
 		if (!card) return;
 
-		var json = JSON.stringify(info, null, 4);
+		var json   = JSON.stringify(info, null, 4);
 		var prompt = 'Save these WordPress Application Password credentials and use them to connect to my site via the WordPress REST API:\n' + json;
 
 		card.innerHTML =
@@ -102,7 +133,7 @@
 
 			newBtn.addEventListener('click', function () {
 				var targetId = newBtn.getAttribute('data-target');
-				var target = document.getElementById(targetId);
+				var target   = document.getElementById(targetId);
 
 				if (!target) return;
 
@@ -113,10 +144,10 @@
 						showCopied(newBtn);
 					});
 				} else {
-					var textarea = document.createElement('textarea');
-					textarea.value = text;
+					var textarea       = document.createElement('textarea');
+					textarea.value     = text;
 					textarea.style.position = 'fixed';
-					textarea.style.opacity = '0';
+					textarea.style.opacity  = '0';
 					document.body.appendChild(textarea);
 					textarea.select();
 					document.execCommand('copy');
@@ -131,7 +162,7 @@
 	 * Show "Copied!" feedback on a button.
 	 */
 	function showCopied(btn) {
-		var original = btn.textContent;
+		var original   = btn.textContent;
 		btn.textContent = agentAccess.copied_text;
 		btn.classList.add('agent-access-copy-btn--copied');
 
@@ -151,7 +182,7 @@
 		btn.addEventListener('click', function () {
 			if (!confirm(agentAccess.confirm_msg)) return;
 
-			btn.disabled = true;
+			btn.disabled    = true;
 			btn.textContent = agentAccess.revoking_text;
 
 			var xhr = new XMLHttpRequest();
@@ -164,7 +195,7 @@
 					response = JSON.parse(xhr.responseText);
 				} catch (e) {
 					alert('Unexpected error. Please reload the page.');
-					btn.disabled = false;
+					btn.disabled    = false;
 					btn.textContent = 'Revoke Connection';
 					return;
 				}
@@ -173,18 +204,18 @@
 					window.location.reload();
 				} else {
 					alert(response.data || 'An error occurred.');
-					btn.disabled = false;
+					btn.disabled    = false;
 					btn.textContent = 'Revoke Connection';
 				}
 			};
 
 			xhr.onerror = function () {
 				alert('Network error. Please try again.');
-				btn.disabled = false;
+				btn.disabled    = false;
 				btn.textContent = 'Revoke Connection';
 			};
 
-			xhr.send('action=agent_access_revoke&nonce=' + encodeURIComponent(agentAccess.revoke_nonce));
+			xhr.send(buildPostBody('agent_access_revoke', agentAccess.revoke_nonce));
 		});
 	}
 })();

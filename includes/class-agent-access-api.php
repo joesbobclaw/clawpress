@@ -12,13 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Agent_Access_API {
 
 	/**
-	 * Create an Agent Access Application Password for the current user.
+	 * Create an Agent Access Application Password.
 	 *
+	 * @param int|null $user_id User ID, or null for current user.
 	 * @return array{password: string, uuid: string, created: int}|WP_Error
 	 */
-	public function create_password() {
-		$user_id  = get_current_user_id();
-		$existing = $this->get_existing_password();
+	public function create_password( $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		$existing = $this->get_existing_password( $user_id );
 
 		if ( $existing ) {
 			return new WP_Error(
@@ -49,13 +53,17 @@ class Agent_Access_API {
 	}
 
 	/**
-	 * Revoke the Agent Access Application Password for the current user.
+	 * Revoke the Agent Access Application Password.
 	 *
+	 * @param int|null $user_id User ID, or null for current user.
 	 * @return true|WP_Error
 	 */
-	public function revoke_password() {
-		$user_id  = get_current_user_id();
-		$existing = $this->get_existing_password();
+	public function revoke_password( $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		$existing = $this->get_existing_password( $user_id );
 
 		if ( ! $existing ) {
 			return new WP_Error(
@@ -76,10 +84,14 @@ class Agent_Access_API {
 	/**
 	 * Get the existing Agent Access Application Password entry (without the password itself).
 	 *
+	 * @param int|null $user_id User ID, or null for current user.
 	 * @return array|null The application password item or null if not found.
 	 */
-	public function get_existing_password() {
-		$user_id   = get_current_user_id();
+	public function get_existing_password( $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
 		$passwords = WP_Application_Passwords::get_user_application_passwords( $user_id );
 
 		foreach ( $passwords as $item ) {
@@ -94,11 +106,16 @@ class Agent_Access_API {
 	/**
 	 * Build the connection info array for display.
 	 *
-	 * @param string $password The plain-text application password.
+	 * @param string   $password The plain-text application password.
+	 * @param int|null $user_id  User ID, or null for current user.
 	 * @return array{site_url: string, username: string, password: string}
 	 */
-	public function get_connection_info( $password ) {
-		$user = wp_get_current_user();
+	public function get_connection_info( $password, $user_id = null ) {
+		if ( null === $user_id ) {
+			$user = wp_get_current_user();
+		} else {
+			$user = get_user_by( 'ID', $user_id );
+		}
 
 		return array(
 			'site_url' => home_url( '/' ),
