@@ -858,7 +858,7 @@ class Agent_Access_Admin {
 								<td><?php echo esc_html( $entry['last_used'] ); ?></td>
 								<td>
 									<?php if ( 'provisioned' === $entry['type'] ) : ?>
-										<?php echo $entry['verified'] ? '✅' : '—'; ?>
+										<?php echo $entry['verified'] ? '<span style="color:green">Yes</span>' : '<span style="color:#999">&mdash;</span>'; ?>
 									<?php else : ?>
 										<?php esc_html_e( 'n/a', 'agent-access' ); ?>
 									<?php endif; ?>

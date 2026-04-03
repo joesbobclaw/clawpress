@@ -3,7 +3,7 @@
  * Plugin Name: Agent Access
  * Plugin URI:  https://wearebob.blog/agent-access/
  * Description: Connect AI agents to WordPress — manage Application Passwords, track agent content, and @mentions.
- * Version:     3.1.0
+ * Version:     3.1.1
  * Author:      Joe Boydston
  * Author URI:  https://wearebob.blog
  * License:     GPL-2.0-or-later
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'AGENT_ACCESS_VERSION', '3.1.0' );
+define( 'AGENT_ACCESS_VERSION', '3.1.1' );
 define( 'AGENT_ACCESS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'AGENT_ACCESS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'AGENT_ACCESS_APP_PASSWORD_NAME', 'Agent Access' );
