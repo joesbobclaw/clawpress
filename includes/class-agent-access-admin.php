@@ -485,7 +485,7 @@ class Agent_Access_Admin {
 		$has_provisioner     = class_exists( 'Agent_Access_Provisioner' );
 		$has_artifacts       = class_exists( 'Agent_Access_Artifacts' );
 		$has_chat            = class_exists( 'Agent_Access_Chat' );
-		$connected_users     = $this->get_all_openclaw_users();
+		$connected_users     = $this->get_all_agent_users();
 		$connected_count     = count( $connected_users );
 		$provisioned_count   = $has_provisioner ? $this->get_provisioned_count() : 0;
 		$recent_activity     = $this->get_recent_activity_count();
