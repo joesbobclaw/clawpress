@@ -805,25 +805,27 @@ class Agent_Access_Admin {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'agent-access' ) );
 		}
 
-		$users_with_passwords = $this->get_all_openclaw_users();
+		$users_with_passwords = $this->get_all_agent_users();
 		?>
 		<div class="wrap">
 			<h1>
 				<span>&#129438;</span>
 				<?php esc_html_e( 'Connected Agents', 'agent-access' ); ?>
 			</h1>
-			<p><?php esc_html_e( 'All users with active agent connections on this site.', 'agent-access' ); ?></p>
+			<p><?php esc_html_e( 'All users with active agent connections on this site — both user-connected and provisioned agents.', 'agent-access' ); ?></p>
 
 			<?php if ( empty( $users_with_passwords ) ) : ?>
-				<p><em><?php esc_html_e( 'No users have connected an agent yet.', 'agent-access' ); ?></em></p>
+				<p><em><?php esc_html_e( 'No agents found.', 'agent-access' ); ?></em></p>
 			<?php else : ?>
 				<table class="widefat striped">
 					<thead>
 						<tr>
 							<th><?php esc_html_e( 'User', 'agent-access' ); ?></th>
+							<th><?php esc_html_e( 'Type', 'agent-access' ); ?></th>
 							<th><?php esc_html_e( 'Role', 'agent-access' ); ?></th>
 							<th><?php esc_html_e( 'Created', 'agent-access' ); ?></th>
 							<th><?php esc_html_e( 'Last Used', 'agent-access' ); ?></th>
+							<th><?php esc_html_e( 'Verified', 'agent-access' ); ?></th>
 							<th><?php esc_html_e( 'Posts', 'agent-access' ); ?></th>
 							<th><?php esc_html_e( 'Media', 'agent-access' ); ?></th>
 						</tr>
@@ -841,12 +843,26 @@ class Agent_Access_Admin {
 									<span class="description"><?php echo esc_html( $entry['user']->user_login ); ?></span>
 								</td>
 								<td>
+									<?php if ( 'provisioned' === $entry['type'] ) : ?>
+										<span class="agent-access-badge agent-access-badge--provisioned"><?php esc_html_e( 'Provisioned', 'agent-access' ); ?></span>
+									<?php else : ?>
+										<span class="agent-access-badge agent-access-badge--connected"><?php esc_html_e( 'Connected', 'agent-access' ); ?></span>
+									<?php endif; ?>
+								</td>
+								<td>
 									<span class="agent-access-badge agent-access-badge--<?php echo esc_attr( $entry['role_slug'] ); ?>">
 										<?php echo esc_html( $entry['role_name'] ); ?>
 									</span>
 								</td>
 								<td><?php echo esc_html( $entry['created'] ); ?></td>
 								<td><?php echo esc_html( $entry['last_used'] ); ?></td>
+								<td>
+									<?php if ( 'provisioned' === $entry['type'] ) : ?>
+										<?php echo $entry['verified'] ? '✅' : '—'; ?>
+									<?php else : ?>
+										<?php esc_html_e( 'n/a', 'agent-access' ); ?>
+									<?php endif; ?>
+								</td>
 								<td><?php echo esc_html( $entry['stats']['post_count'] ); ?></td>
 								<td><?php echo esc_html( $entry['stats']['media_count'] ); ?></td>
 							</tr>
@@ -865,42 +881,83 @@ class Agent_Access_Admin {
 	 *
 	 * @return array
 	 */
-	private function get_all_openclaw_users() {
-		$results = array();
-		$users   = get_users( array( 'number' => 200 ) );
+	private function get_all_agent_users() {
+		$results  = array();
+		$seen_ids = array();
+		$users    = get_users( array( 'number' => 500 ) );
+
+		// Agent Access app password names to match.
+		$agent_pass_names = array(
+			AGENT_ACCESS_APP_PASSWORD_NAME,                    // "Agent Access"
+			'Agent Access Auto-Provisioned',                    // New provisioner.
+			'Agent Access Auto-Provisioned (recovered)',        // Recovered creds.
+			'ClawPress',                                        // Legacy connected.
+			'ClawPress Auto-Provisioned',                       // Legacy provisioner.
+			'ClawPress Auto-Provisioned (recovered)',            // Legacy recovered.
+		);
 
 		foreach ( $users as $user ) {
-			$passwords = WP_Application_Passwords::get_user_application_passwords( $user->ID );
+			if ( isset( $seen_ids[ $user->ID ] ) ) {
+				continue;
+			}
+
+			// Determine if provisioned (check both new and legacy meta).
+			$is_provisioned = false;
+			if ( class_exists( 'Agent_Access_Compat' ) ) {
+				$is_provisioned = (bool) Agent_Access_Compat::get_meta( $user->ID, '_agent_access_provisioned', true );
+			} else {
+				$is_provisioned = (bool) get_user_meta( $user->ID, '_agent_access_provisioned', true )
+					|| (bool) get_user_meta( $user->ID, '_clawpress_provisioned', true );
+			}
+
+			// Find any matching app password.
+			$passwords  = WP_Application_Passwords::get_user_application_passwords( $user->ID );
+			$found_pass = null;
 
 			foreach ( $passwords as $item ) {
-				if ( $item['name'] !== AGENT_ACCESS_APP_PASSWORD_NAME ) {
-					continue;
+				if ( in_array( $item['name'], $agent_pass_names, true ) ) {
+					$found_pass = $item;
+					break;
 				}
-
-				$roles     = $user->roles;
-				$role_slug = ! empty( $roles ) ? $roles[0] : 'none';
-
-				$wp_roles  = wp_roles();
-				$role_name = isset( $wp_roles->role_names[ $role_slug ] )
-					? translate_user_role( $wp_roles->role_names[ $role_slug ] )
-					: ucfirst( $role_slug );
-
-				$created   = date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['created'] );
-				$last_used = ! empty( $item['last_used'] )
-					? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $item['last_used'] )
-					: __( 'Never', 'agent-access' );
-
-				$results[] = array(
-					'user'      => $user,
-					'role_slug' => $role_slug,
-					'role_name' => $role_name,
-					'created'   => $created,
-					'last_used' => $last_used,
-					'stats'     => Agent_Access_Tracker::get_stats( $user->ID ),
-				);
-
-				break; // Only one Agent Access password per user.
 			}
+
+			// Skip users with no agent connection and no provisioned flag.
+			if ( ! $found_pass && ! $is_provisioned ) {
+				continue;
+			}
+
+			$roles     = $user->roles;
+			$role_slug = ! empty( $roles ) ? $roles[0] : 'none';
+
+			$wp_roles  = wp_roles();
+			$role_name = isset( $wp_roles->role_names[ $role_slug ] )
+				? translate_user_role( $wp_roles->role_names[ $role_slug ] )
+				: ucfirst( $role_slug );
+
+			$created   = $found_pass
+				? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $found_pass['created'] )
+				: __( 'Unknown', 'agent-access' );
+			$last_used = ( $found_pass && ! empty( $found_pass['last_used'] ) )
+				? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $found_pass['last_used'] )
+				: __( 'Never', 'agent-access' );
+
+			$verified = false;
+			if ( $is_provisioned && class_exists( 'Agent_Access_Compat' ) ) {
+				$verified = (bool) Agent_Access_Compat::get_meta( $user->ID, '_agent_access_verified', true );
+			}
+
+			$results[] = array(
+				'user'      => $user,
+				'type'      => $is_provisioned ? 'provisioned' : 'connected',
+				'role_slug' => $role_slug,
+				'role_name' => $role_name,
+				'created'   => $created,
+				'last_used' => $last_used,
+				'verified'  => $verified,
+				'stats'     => Agent_Access_Tracker::get_stats( $user->ID ),
+			);
+
+			$seen_ids[ $user->ID ] = true;
 		}
 
 		return $results;

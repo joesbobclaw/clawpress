@@ -495,3 +495,21 @@
 	color: #646970;
 	font-size: 12px;
 }
+
+/* Connected Agents page badges */
+.agent-access-badge--provisioned {
+	background: #e8f0fe;
+	color: #1a73e8;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
+.agent-access-badge--connected {
+	background: #e6f4ea;
+	color: #137333;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 12px;
+	font-weight: 600;
+}
